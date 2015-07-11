@@ -7,6 +7,7 @@ import java.awt.dnd.DropTarget;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,11 +19,12 @@ public class Main {
     public static JFrame frame;
     public static JMenuBar menuBar;
     public static File choseFile = null;
-    public static int z = 50;
+    public static int y = 50;
     public static JLabel label = new JLabel();
     public static JFileChooser chooser = new JFileChooser();
     public static Properties properties = new Properties();
     public static GraphicsEnvironment environment;
+    public static BufferedImage icon;
     public static Font ubuntuFount;
 
     public Main() {
@@ -78,6 +80,38 @@ public class Main {
         file.add(openFile);
         menuBar.add(file);
 
+        JButton addButton = new JButton("New");
+        addButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFrame frame = new JFrame("Choose new parameter");
+                frame.setResizable(false);
+                frame.setLocationRelativeTo(null);
+                frame.setSize(300, 150);
+                frame.setIconImage(icon);
+                frame.setVisible(true);
+
+                JLabel label = new JLabel("Parameter name: ");
+                label.setSize(20, 25);
+                label.setLocation(85, 150);
+                label.setVisible(true);
+
+                frame.add(label);
+
+                JTextField value = new JTextField(1);
+                value.setSize(20, 25);
+                value.setLocation(100, 150);
+                value.setVisible(true);
+
+                frame.add(value);
+            }
+        });
+        addButton.setLocation(695, 501);
+        addButton.setSize(50, 25);
+        addButton.setVisible(true);
+
+        frame.add(addButton);
+
         DragDropListener listener = new DragDropListener();
 
         new DropTarget(chooser, listener);
@@ -100,10 +134,12 @@ public class Main {
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(frame.EXIT_ON_CLOSE);
         try {
-            frame.setIconImage(ImageIO.read(Main.class.getResourceAsStream("icon.png")));
+            icon = ImageIO.read(Main.class.getResourceAsStream("icon.png"));
+            frame.setIconImage(icon);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        frame.setLayout(new BorderLayout());
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
@@ -121,6 +157,9 @@ public class Main {
                 FileInputStream stream = new FileInputStream(file);
                 properties.loadFromXML(stream);
                 stream.close();
+
+                frame.setTitle("Language IDE - 1.0 {" + file.toString() + "}");
+
                 Enumeration enuKeys = properties.keys();
                 while (enuKeys.hasMoreElements()) {
                     String key = (String) enuKeys.nextElement();
@@ -138,14 +177,19 @@ public class Main {
 
 
     public void addJtextElement(String keys, String value) {
-        JTextArea area = new JTextArea(1, 1);
-        area.setSize(50, 20);
-        area.setLocation(100, z);
-        area.setFont(new Font("UbuntuMono-RI", Font.PLAIN, 16));
-        z += 2;
-        area.setText(value);
-        area.setVisible(true);
-        frame.add(area);
+        JPanel panel = new JPanel();
+        panel.setPreferredSize(new Dimension(100, 100));
+        panel.setMaximumSize(new Dimension(800, 600));
+        panel.setLocation(300, y);
+        JTextField field = new JTextField(1);
+        field.setSize(20, 10);
+        field.setLocation(0, 20);
+        field.setFont(new Font("UbuntuMono-RI", Font.PLAIN, 16));
+        y += 20;
+        field.setText(value);
+        field.setVisible(true);
+        panel.add(field);
+        frame.add(panel, BorderLayout.CENTER);
     }
 
     public static ImageIcon getImageIcon(String img) {
