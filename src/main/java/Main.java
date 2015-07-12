@@ -1,4 +1,6 @@
 
+import com.sun.corba.se.impl.encoding.WrapperInputStream;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
@@ -23,6 +25,7 @@ public class Main {
     public static BufferedImage icon;
     public static Font ubuntuFount;
     public static Main main;
+    public static SpringLayout layout = new SpringLayout();
 
     public Main() {
 
@@ -30,15 +33,14 @@ public class Main {
 
         try {
             ubuntuFount = new Font("UbuntuMono-RI", Font.PLAIN, 8);
-            if(ubuntuFount == null) {
+            if (ubuntuFount == null) {
                 environment = GraphicsEnvironment.getLocalGraphicsEnvironment();
                 ubuntuFount = Font.createFont(Font.TRUETYPE_FONT, Main.class.getResourceAsStream("UbuntuMono-RI.ttf"));
                 environment.registerFont(ubuntuFount);
             }
-        } catch (IOException|FontFormatException e) {
+        } catch (IOException | FontFormatException e) {
             //Handle exception
         }
-
 
 
         menuBar = new JMenuBar();
@@ -66,13 +68,6 @@ public class Main {
         openFile.addActionListener(new ActionChooseFile());
         file.add(openFile);
         menuBar.add(file);
-
-        /**JButton addButton = new JButton("New");
-        addButton.addActionListener(new AddParameter());
-        addButton.setLocation(695, 501);
-        addButton.setSize(50, 25);  TODO: Fix this
-        addButton.setVisible(true);
-        frame.add(addButton);*/
 
         chooser.setEnabled(true);
         chooser.setDragEnabled(true);
@@ -112,21 +107,26 @@ public class Main {
             try {
                 Main.label.setEnabled(false);
                 Main.label.setText("");
-                FileInputStream stream = new FileInputStream(file);
-                properties.loadFromXML(stream);
-                stream.close();
+                BufferedReader bufRdr = new BufferedReader(
+                        new InputStreamReader(new FileInputStream(file), "ISO-8859-1"));
+                properties.loadFromXML(new ReaderInputStream(bufRdr));
+                bufRdr.close();
+
                 frame.setTitle("Language IDE - 1.0 {" + file.toString() + "}");
+
                 Enumeration enuKeys = properties.keys();
-                JScrollPane pane = new JScrollPane();
-                JPanel panel = new JPanel(new SpringLayout());
+
+                JPanel panel = new JPanel();
+                panel.setLayout(layout);
                 panel.setOpaque(true);
-                pane.add(panel);
                 while (enuKeys.hasMoreElements()) {
                     String key = (String) enuKeys.nextElement();
                     String value = properties.getProperty(key);
                     addJtextElement(key, value, panel);
                 }
+                JScrollPane pane = new JScrollPane(panel);
                 frame.setContentPane(pane);
+                frame.setLayout(new FlowLayout());
                 frame.pack();
                 SwingUtilities.updateComponentTreeUI(frame);
             } catch (IOException e) {
@@ -136,8 +136,7 @@ public class Main {
             try {
                 Main.label.setEnabled(false);
                 Main.label.setText("");
-                BufferedReader bufRdr  = new BufferedReader(
-                        new InputStreamReader(new FileInputStream(file),"ISO-8859-1"));
+                BufferedReader bufRdr = new BufferedReader(new InputStreamReader(new FileInputStream(file), "ISO-8859-1"));
                 properties.load(bufRdr);
                 bufRdr.close();
 
@@ -145,14 +144,20 @@ public class Main {
 
                 Enumeration enuKeys = properties.keys();
 
-                JPanel panel = new JPanel(new SpringLayout());
+                JPanel panel = new JPanel();
+                panel.setLayout(layout);
                 panel.setOpaque(true);
                 while (enuKeys.hasMoreElements()) {
                     String key = (String) enuKeys.nextElement();
                     String value = properties.getProperty(key);
                     addJtextElement(key, value, panel);
                 }
-                frame.setContentPane(panel);
+                JScrollPane pane = new JScrollPane();
+                for(Component c : panel.getComponents()) {
+                    pane.add(c);
+                }
+                pane.setPreferredSize(new Dimension(380, 100));
+                frame.setContentPane(pane);
                 frame.pack();
                 SwingUtilities.updateComponentTreeUI(frame);
             } catch (IOException e) {
@@ -165,14 +170,14 @@ public class Main {
 
     public void addJtextElement(String keys, String value, JPanel panel) {
         i++;
-        System.out.print("Register new JTextElement: value:" + value + "  keys: " + keys + "\t");
+        System.out.print("Register new JTextElement: value:" + value + "  keys: " + keys + "\n");
         JLabel l = new JLabel(keys, JLabel.TRAILING);
         panel.add(l);
         JTextField textField = new JTextField(value, 10);
         l.setLabelFor(textField);
+        layout.putConstraint(SpringLayout.NORTH, panel, i * 5, SpringLayout.NORTH, l);
+        layout.putConstraint(SpringLayout.SOUTH, panel, i * 5, SpringLayout.SOUTH, l);
         panel.add(textField);
-
-        SpringUtilities.makeCompactGrid(panel, i, 2, 6, 6, 6, 6);
     }
 
     public static ImageIcon getImageIcon(String img) {
